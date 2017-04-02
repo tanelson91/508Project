@@ -1,0 +1,58 @@
+h1{
+	color: black;
+	position: absolute;
+	top: 230px;
+	left: 625px;
+	
+}
+
+#menu{
+	list-style-type: circle;
+	position: absolute;
+	top: 50px;
+	right: 20px;
+	min-width: 100px;
+}
+
+#entry{
+	position: absolute;
+	top: 350px;
+	left: 625px;
+	
+}
+
+body {
+	background-color: #009933;
+    background-image: url("topspot.jpg");
+	background-repeat: no-repeat;
+	background-position: 50% 10%;
+}
+
+a{
+	font-size: 20px;
+}
+
+/* unvisited link */
+a:link {
+    color: black;
+}
+
+/* visited link */
+a:visited {
+    color: black;
+}
+
+/* mouse over link */
+a:hover {
+    color: hotpink;
+}
+
+/* selected link */
+a:active {
+    color: blue;
+}
+
+input[type=text] {
+    background-color: black;
+    color: white;
+}
