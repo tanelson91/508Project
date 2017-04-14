@@ -37,8 +37,12 @@ create table LoadEvent(
 EventID number (10) not null,
 "Date" DATE,
 ProNumber number,
+Origin varchar2,
+Destination varchar2,
 Primary key (EventID),
-Foreign key (ProNumber) references Shipment(ProNumber));
+Foreign key (ProNumber) references Shipment(ProNumber)
+Foreign key(Origin) references Entity(EntityID),
+Foreign key(Destination) references Entity(EntityID));
 
 create table Terminal(
 TerminalID varchar2 not null,
@@ -62,7 +66,8 @@ isPaying number not null,
 Primary key(ProNumber),
 Foreign key(ProNumber) references Shipment(ProNumber),
 Foreign key(Shipper) references Customer(ID),
-Foreign key(Consignee) references Customer(ID));
+Foreign key(Consignee) references Customer(ID)
+Foreign key(isPaying) references Customer(ID));
 
 create table Door(
 TerminalID varchar2 not null,
@@ -125,16 +130,6 @@ Foreign key(Destination) references Terminal(TerminalID),
 Foreign key(CurrentLocation) references Terminal(TerminalID)
 );
 
-/*IS THIS TABLE REALLY NECESSARY, COMBINE WITH LOADEVENT TABLE?*/
-create table EventLocations(
-EventID number,
-Origin varchar2,
-Destination varchar2,
-Primary key(EventID),
-Foreign key(EventID) references LoadEvent(EventID),
-Foreign key(Origin) references Entity(EntityID),
-Foreign key(Destination) references Entity(EntityID));
-
 create table shipmentLoose(
 ProNumber number,
 Cube number(4),
@@ -157,7 +152,6 @@ Cube number(4),
 Primary key(PalletID),
 Foreign key(ProNumber) references Shipment(ProNumber));
 
-/* IS THIS TABLE REALLY NEEDED NOW THAT WE HAVE THE FLOORS IN THE ENTITY TABLE?*/
 create table TerminalFloors(
 TerminalID varchar2,
 FloorID varchar2,
@@ -165,7 +159,6 @@ Primary key(TerminalID,FloorID),
 Foreign key(TerminalID) references Terminal(TerminalID),
 Foreign key(FloorID) references Entity(EntityID));
 
-/*IS THIS TABLE REALLY NECESSARY, COMBINE WITH LOADEVENT TABLE?*/
 create table EventEmployees(
 EventID number,
 Employee number,
@@ -198,6 +191,12 @@ MAXVALUE
 INCREMENT BY 1
 NOCYCLE;
 
+CREATE SEQUENCE PalletID_seq
+START WITH 1
+MAXVALUE
+5000
+INCREMENT BY 1
+NOCYCLE;
 
 /*-------------------Functions-----------------------------------*/
 
@@ -208,7 +207,7 @@ NOCYCLE;
 
 /*Create a procedure to insert a new Customer that inserts the address of the new Customer followed by inserting the Customer with the created address ID*/
 
-/*Create a procedure to insert a new event that takes in employeeID, and the two locations of the event. It creates the event first, and uses the created eventID to insert the event into the eventLocations table  TODO maybe deleting some tables to resolve this*/
+/*Create a procedure to insert a new LoadEvent that takes in employeeID, and the two locations of the event. It creates the LoadEvent first, and uses the created eventID to insert the employee into the Event Employees table */
 
 
 /*-------------------Triggers------------------------------------*/
@@ -269,6 +268,10 @@ insert into entity('RKE','Terminal');
 insert into entity('CLT','Terminal');
 insert into entity('ATL','Terminal');
 insert into entity('NFK','Terminal');
+insert into entity('DNTN','Route');
+insert into entity('ZXTN','Route');
+insert into entity('PETE','Route');
+insert into entity('APPT','Route');
 
 insert into shipment(65613541,3/18/17,83, 74.53);
 insert into shipment(39247393,3/18/17,302, 110.53);
@@ -295,12 +298,12 @@ insert into address(AddressID_seq.nextval,'7500 Statesville Rd', 28269, Charlott
 insert into address(AddressID_seq.nextval,'6125 Duquesne Dr SW', 30336, Atlanta, GA);
 insert into address(AddressID_seq.nextval,'1005 Enterprise Cir', 23321, Chesapeake, VA);
 
-insert int LoadEvent(EventID_seq.nextval, 3/17/17,65613541);
-insert int LoadEvent(EventID_seq.nextval, 3/17/17,39247393);
-insert int LoadEvent(EventID_seq.nextval, 3/17/17,97413454);
-insert int LoadEvent(EventID_seq.nextval, 3/17/17,95503108);
-insert int LoadEvent(EventID_seq.nextval, 3/17/17,48172764);
-insert int LoadEvent(EventID_seq.nextval, 3/17/17,95503090);
+insert into LoadEvent(EventID_seq.nextval, 3/17/17,65613541);
+insert into LoadEvent(EventID_seq.nextval, 3/17/17,39247393);
+insert into LoadEvent(EventID_seq.nextval, 3/17/17,97413454);
+insert into LoadEvent(EventID_seq.nextval, 3/17/17,95503108);
+insert into LoadEvent(EventID_seq.nextval, 3/17/17,48172764);
+insert into LoadEvent(EventID_seq.nextval, 3/17/17,95503090);
 
 /*****TODO GRAB ADDRESS IDs FROM ADDRESS TABLE*/
 insert into Terminal('RIC','ADDRESS ID HERE');
@@ -310,11 +313,11 @@ insert into Terminal('ATL','ADDRESS ID HERE');
 insert into Terminal('NFK','ADDRESS ID HERE');
 
 /*****TODO GRAB ADDRESS IDs FROM ADDRESS TABLE*/
-insert into Customer(7421851,'Elegant Draperies', ADDRESS ID HERE);
-insert into Customer(7422846,'Foley Company', ADDRESS ID HERE);
-insert into Customer(7421978,'Medline Industries', ADDRESS ID HERE);
-insert into Customer(7422383,'Sun Chemical Corporation', ADDRESS ID HERE);
-insert into Customer(7429683,'Henry Schein Animal Health', ADDRESS ID HERE);
+insert into Customer(7421851,'Elegant Draperies', 'ADDRESS ID HERE');
+insert into Customer(7422846,'Foley Company', 'ADDRESS ID HERE');
+insert into Customer(7421978,'Medline Industries', 'ADDRESS ID HERE');
+insert into Customer(7422383,'Sun Chemical Corporation', 'ADDRESS ID HERE');
+insert into Customer(7429683,'Henry Schein Animal Health', 'ADDRESS ID HERE');
 
 insert into CustomerInteractions(65613541,7421851,7421851);
 insert into CustomerInteractions(39247393,7422846,7422846);
@@ -410,23 +413,6 @@ insert into ShipmentTravels(39247393,'CLT','RIC','RIC');
 insert into ShipmentTravels(95503108,'CLT','RIC','RIC');
 insert into ShipmentTravels(97413454,'CLT','RIC','RIC');
 
-create table EventLocations(
-EventID number,
-Origin varchar2,
-Destination varchar2,
-Primary key(EventID),
-Foreign key(EventID) references LoadEvent(EventID),
-Foreign key(Origin) references Entity(EntityID),
-Foreign key(Destination) references Entity(EntityID));
-
-/*****************TODO NEED TO GRAB EVENT IDs HERE*/
-insert into EventLocations(EVENTID here, '3058', '480135');
-insert into EventLocations(EVENTID here, '3058', '843');
-insert into EventLocations(EVENTID here, '3058', '742FU');
-insert into EventLocations(EVENTID here, '3058', '742FU');
-insert into EventLocations(EVENTID here, '3058', '148015');
-insert into EventLocations(EVENTID here, '3058', '148056');
-
 insert into shipmentLoose(6561341,0,0);
 insert into shipmentLoose(39247393,0,0);
 insert into shipmentLoose(97413454,0,0);
@@ -442,25 +428,16 @@ insert into TerminalTrailers('RIC','5888');
 insert into TerminalTrailers('RIC','5029');
 insert into TerminalTrailers('RIC','148015');
 
-
-create table ShipmentPallets(
-PalletID number(8) not null,
-ProNumber number,
-Weight number(8),
-Cube number(4),
-Primary key(PalletID),
-Foreign key(ProNumber) references Shipment(ProNumber));
-
-insert into shipmentsPallets(656135411,65613541,83,1);
-insert into shipmentsPallets(974134541,97413454,369,1);
-insert into shipmentsPallets(974134542,97413454,1002,1);
-insert into shipmentsPallets(974134543,97413454,369,1);
-insert into shipmentsPallets(974134544,97413454,458,1);
-insert into shipmentsPallets(974134545,97413454,205,1);
-insert into shipmentsPallets(974134546,97413454,369,1);
-insert into shipmentsPallets(974134547,97413454,136,1);
-insert into shipmentsPallets(481727641,48172764,402,1);
-insert into shipmentsPallets(481727642,48172764,545,1);
+insert into shipmentsPallets(PalletID_seq.nextval,65613541,83,1);
+insert into shipmentsPallets(PalletID_seq.nextval,97413454,369,1);
+insert into shipmentsPallets(PalletID_seq.nextval,97413454,1002,1);
+insert into shipmentsPallets(PalletID_seq.nextval,97413454,369,1);
+insert into shipmentsPallets(PalletID_seq.nextval,97413454,458,1);
+insert into shipmentsPallets(PalletID_seq.nextval,97413454,205,1);
+insert into shipmentsPallets(PalletID_seq.nextval,97413454,369,1);
+insert into shipmentsPallets(PalletID_seq.nextval,97413454,136,1);
+insert into shipmentsPallets(PalletID_seq.nextval,48172764,402,1);
+insert into shipmentsPallets(PalletID_seq.nextval,48172764,545,1);
 
 insert into TerminalFloors('RIC','A');
 insert into TerminalFloors('RIC','B');
@@ -494,13 +471,6 @@ insert into TerminalFloors('RIC','6');
 insert into TerminalFloors('RIC','7');
 insert into TerminalFloors('RIC','8');
 insert into TerminalFloors('RIC','9');
-
-create table EventEmployees(
-EventID number,
-Employee number,
-Primary key(EventID,Employee),
-foreign key(EventID) references LoadEvent(EventID),
-foreign key(Employee) references Employee(EmpID));
 
 /*TODO Grab EVENT IDs HERE */
 insert into EventEmployees(EVENTID GOES HERE, 014364);
