@@ -1,62 +1,76 @@
-/*------------------TABLE CREATION----------------*/
-create table Employee(
+CREATE TABLE Employee(
 EmpID number (7) not null,
+/*will eventually convert to varchar for actual implementation
+CONSTRAINT emp_id_format CHECK (REGEXP_LIKE(EmpID,'[0-9]{6}')),*/
 First_Name varchar2(25),
 Last_Name varchar2(25),
-Wage number (7),
-primary key (EmpID));
+Wage float
+CONSTRAINT emp_wage_ck CHECK (Wage >= 14.00),
+primary key (EmpID)
+);
 
 create table Shipment(
 ProNumber number(8) not null,
 DueDate date,
 TotalWeight number(8),
-Price number(8),
-Primary key (ProNumber));
+Price number(6,2)
+CONSTRAINT shpmt_price_ck CHECK (Price >= 50),
+Primary key (ProNumber)
+);
 
 create table ShipmentCondition(
-ProNumber number not null,
+ProNumber number(8) not null,
 Damaged number(4),
 Short number(4),
 over number(4),
-Primary key(ProNumber));
+Primary key(ProNumber),
+CONSTRAINT shpmt_cnd_pronum_fk FOREIGN KEY (ProNumber) REFERENCES shipment (ProNumber)
+);
 
 create table Entity(
 EntityID varchar2(10) not null,
-Type varchar2(25),
-Primary key(EntityID));
+Entity_type varchar2(25),
+Primary key(EntityID)
+);
 
 create table Address(
 AddressID number(10) not null,
 StreetAddress varchar(40),
 City varchar(20),
-ZipCode number(5),
-State varchar(15),
-Primary key(AddressID));
+ZipCode number(5) not null,
+State varchar(2),
+Primary key (AddressID)
+);
 
 create table LoadEvent(
 EventID number (10) not null,
-"Date" DATE,
-ProNumber number,
-Origin varchar2,
-Destination varchar2,
+"Date" DATE not null,
+ProNumber number (8),
 Primary key (EventID),
-Foreign key (ProNumber) references Shipment(ProNumber)
-Foreign key(Origin) references Entity(EntityID),
-Foreign key(Destination) references Entity(EntityID));
+CONSTRAINT loadEv_proNum_fk Foreign key (ProNumber) references Shipment(ProNumber)
+);
 
 create table Terminal(
-TerminalID varchar2 not null,
-AddressID number not null,
+TerminalID varchar2(10) not null,
+StreetAddress varchar2(40) not null,
+ZipCode number (5)not null,
+City varchar2(20) not null,
+State varchar2(2),
 Primary key(TerminalID),
-Foreign key(TerminalID) references Entity(EntityID),
-Foreign key(AddressID) references Address(AddressID));
+Foreign key(TerminalID) references Entity(EntityID)
+);
 
 create table Customer(
 ID number(7) not null,
-AddressID number not null,
-Name varchar2(25),
+Name varchar2(25) not null,
+AddressID number(10) not null,
+StreetAddress varchar2(40),
+ZipCode number(5) not null,
+City varchar2(20),
+State varchar2(2),
 Primary key(ID),
-Foreign key (AddressID) references Address(AddressID));
+CONSTRAINT cust_addrID_fk FOREIGN KEY (AddressID) REFERENCES Address(AddressID)
+);
 
 create table CustomerInteractions(
 ProNumber not null,
@@ -66,63 +80,67 @@ isPaying number not null,
 Primary key(ProNumber),
 Foreign key(ProNumber) references Shipment(ProNumber),
 Foreign key(Shipper) references Customer(ID),
-Foreign key(Consignee) references Customer(ID)
+Foreign key(Consignee) references Customer(ID),
 Foreign key(isPaying) references Customer(ID));
 
 create table Door(
-TerminalID varchar2 not null,
+TerminalID varchar2(10) not null,
 DoorNumber number(4) not null,
-Occupied varchar2,
+Occupied varchar2(1),
 Primary key(DoorNumber,TerminalID),
-Foreign key(TerminalID) references Terminal(TerminalID),
-Foreign key(Occupied) references Entity(EntityID));
+Foreign key(TerminalID) references Terminal(TerminalID)
+);
 
 create table Trailer(
-TrailerNumber varchar2 not null,
-DoorNumber number not null,
-TerminalID varchar2,
+TrailerNumber varchar2(10) not null,
+DoorNumber number(3) not null,
+TerminalID varchar2(10),
 Primary key (TrailerNumber),
 Foreign key (TrailerNumber) references Entity(EntityID),
-Foreign key (DoorNumber,TerminalID) references Door(DoorNumber,TerminalID));
+Foreign key (DoorNumber,TerminalID) references Door(DoorNumber,TerminalID)
+);
 
 create table LineHaulTravel(
-TrailerNumber varchar2 not null,
-Origin varchar2 not null,
+TrailerNumber varchar2(10) not null,
+Origin varchar2(10) not null,
 "Date" date not null,
-Destination varchar2,
+Destination varchar2(10) not null,
 Primary key(TrailerNumber, Origin, "Date"),
 Foreign key(TrailerNumber) references Trailer(TrailerNumber),
 Foreign key(Origin) references Terminal(TerminalID),
-Foreign key(Destination) references Terminal(TerminalID));
+Foreign key(Destination) references Terminal(TerminalID)
+);
 
 create table CityHaulRoute(
-TrailerNumber varchar2 not null,
-Route varchar2,
+TrailerNumber varchar(10) not null,
+Route varchar2(10),
 Primary key(Trailernumber),
 Foreign key(Trailernumber) references Trailer(TrailerNumber),
-Foreign key(Route) references Entity(EntityID));
+Foreign key(Route) references Entity(EntityID)
+);
 
 create table EmployeeWorkPlace(
-EmpID number not null,
-TerminalID varchar2,
+EmpID number(7) not null,
+TerminalID varchar2(10) not null,
 Primary key(EmpID),
 Foreign key(EmpID) references Employee(EmpID),
-Foreign key(TerminalID) references Terminal(TerminalID));
+Foreign key(TerminalID) references Terminal(TerminalID)
+);
 
 create table FloorContents(
-ProNumber NUMBER not null,
-FloorID varchar,
-TerminalID varchar2,
+ProNumber NUMBER(8) not null,
+FloorID VARCHAR2(10),
+TerminalID VARCHAR2(10),
 Primary key(ProNumber),
 Foreign key(ProNumber) references Shipment(ProNumber),
 Foreign key(FloorID) references Entity(EntityID),
 Foreign key(TerminalID) references Terminal(TerminalID));
 
 create table ShipmentTravels(
-ProNumber number not null,
-Origin varchar2,
-Destination varchar2,
-CurrentLocation varchar2,
+ProNumber NUMBER(8) not null,
+Origin VARCHAR2(10),
+Destination VARCHAR2(10),
+CurrentLocation VARCHAR2(10),
 Primary key(ProNumber),
 Foreign key(ProNumber) references Shipment(ProNumber),
 Foreign key(Origin) references Terminal(TerminalID),
@@ -131,49 +149,51 @@ Foreign key(CurrentLocation) references Terminal(TerminalID)
 );
 
 create table shipmentLoose(
-ProNumber number,
+ProNumber NUMBER(8) NOT NULL,
 Cube number(4),
 Quantity number(4),
 Primary key(ProNumber),
 Foreign key(ProNumber) references Shipment(ProNumber));
 
 create table TerminalTrailers(
-TerminalID varchar2,
-TrailerNumber varchar2,
+TerminalID varchar2(10),
+TrailerNumber varchar2(10),
 Primary key(TerminalID, TrailerNumber),
 Foreign key(TerminalID) references Terminal(TerminalID),
 Foreign key(TrailerNumber) references Trailer(TrailerNumber));
 
 create table ShipmentPallets(
 PalletID number(8) not null,
-ProNumber number,
+ProNumber number(8) NOT NULL,
 Weight number(8),
 Cube number(4),
 Primary key(PalletID),
-Foreign key(ProNumber) references Shipment(ProNumber));
+Foreign key(ProNumber) references Shipment(ProNumber)
+);
 
 create table TerminalFloors(
-TerminalID varchar2,
-FloorID varchar2,
+TerminalID varchar2(10),
+FloorID varchar2(10),
 Primary key(TerminalID,FloorID),
 Foreign key(TerminalID) references Terminal(TerminalID),
-Foreign key(FloorID) references Entity(EntityID));
+Foreign key(FloorID) references Entity(EntityID)
+);
 
 create table EventEmployees(
-EventID number,
-Employee number,
-Primary key(EventID,Employee),
+EventID NUMBER(10) NOT NULL,
+EmpID NUMBER(7) NOT NULL,
+Primary key(EventID,EmpID),
 foreign key(EventID) references LoadEvent(EventID),
-foreign key(Employee) references Employee(EmpID));
+foreign key(EmpID) references Employee(EmpID)
+);
 
 /*--------------------Views-------------------------------------*/
-
 /* create a view that shows the Terminal and its full address*/
 create view TerminalAddresses(Terminal_id,StreetAddress,City,ZipCode,state)
 as
-select terminalID,StreetAddress,City,ZipCode,State
-from terminal join Address on terminals.AddressID=Address.AddressID;
-
+select terminalID,terminal.StreetAddress,terminal.City,terminal.ZipCode,terminal.State
+from terminal 
+join Address on terminal.AddressID=Address.AddressID;
 
 /*--------------------Sequences----------------------------------*/
 
@@ -198,284 +218,279 @@ MAXVALUE
 INCREMENT BY 1
 NOCYCLE;
 
-/*-------------------Functions-----------------------------------*/
-
-
-/*-------------------Procedures----------------------------------*/
-
-/*Create a procedure to insert a new terminal that inserts the address of the new terminal followed by inserting the terminal with the created address ID*/
-
-/*Create a procedure to insert a new Customer that inserts the address of the new Customer followed by inserting the Customer with the created address ID*/
-
-/*Create a procedure to insert a new LoadEvent that takes in employeeID, and the two locations of the event. It creates the LoadEvent first, and uses the created eventID to insert the employee into the Event Employees table */
-
-
-/*-------------------Triggers------------------------------------*/
-
-/*Create a Trigger that  after an employee works 11 load events in a day than he gets a 1% raise*/
-
-
 /*--------------------DATABASE POPULATION------------------------*/
+insert into employee values(014364,'Taylor','Nelson',17.85);
+insert into employee values(018580,'John','Smith',17.85);
+insert into employee values(014987,'Jermel','Simmons',14.00);
+insert into employee values(019230,'Mike','Thompson',17.85);
+insert into employee values(014855,'Allan','Jones',14.00);
 
-insert into employee(014364,'Taylor','Nelson',17.85);
-insert into employee(018580,'John','Smith',17.85);
-insert into employee(014987,'Jermel','Simmons',14.00);
-insert into employee(019230,'Mike','Thompson',17.85);
-insert into employee(014855,'Allan','Jones',14.00);
+select * from employee;
+insert into entity values('742FA','Floor');
+insert into entity values('742FB','Floor');
+insert into entity values('742FC','Floor');
+insert into entity values('742FD','Floor');
+insert into entity values('742FE','Floor');
+insert into entity values('742FF','Floor');
+insert into entity values('742FG','Floor');
+insert into entity values('742FH','Floor');
+insert into entity values('742FI','Floor');
+insert into entity values('742FJ','Floor');
+insert into entity values('742FK','Floor');
+insert into entity values('742FL','Floor');
+insert into entity values('742FM','Floor');
+insert into entity values('742FN','Floor');
+insert into entity values('742FP','Floor');
+insert into entity values('742FQ','Floor');
+insert into entity values('742FR','Floor');
+insert into entity values('742FS','Floor');
+insert into entity values('742FT','Floor');
+insert into entity values('742FU','Floor');
+insert into entity values('742FV','Floor');
+insert into entity values('742FW','Floor');
+insert into entity values('742FX','Floor');
+insert into entity values('742F1','Floor');
+insert into entity values('742F2','Floor');
+insert into entity values('742F3','Floor');
+insert into entity values('742F4','Floor');
+insert into entity values('742F5','Floor');
+insert into entity values('742F6','Floor');
+insert into entity values('742F7','Floor');
+insert into entity values('742F8','Floor');
+insert into entity values('742F9','Floor');
+insert into entity values('5888','Trailer');
+insert into entity values('148015','Trailer');
+insert into entity values('148006','Trailer');
+insert into entity values('843','Trailer');
+insert into entity values('846','Trailer');
+insert into entity values('852','Trailer');
+insert into entity values('5029','Trailer');
+insert into entity values('3058','Trailer');
+insert into entity values('RIC','Terminal');
+insert into entity values('RKE','Terminal');
+insert into entity values('CLT','Terminal');
+insert into entity values('ATL','Terminal');
+insert into entity values('NFK','Terminal');
+insert into entity values('FRD','Terminal');
+insert into entity values('DNTN','Route');
+insert into entity values('ZXTN','Route');
+insert into entity values('PETE','Route');
+insert into entity values('APPT','Route');
 
-insert into entity('742FA','Floor');
-insert into entity('742FB','Floor');
-insert into entity('742FC','Floor');
-insert into entity('742FD','Floor');
-insert into entity('742FE','Floor');
-insert into entity('742FF','Floor');
-insert into entity('742FG','Floor');
-insert into entity('742FH','Floor');
-insert into entity('742FI','Floor');
-insert into entity('742FJ','Floor');
-insert into entity('742FK','Floor');
-insert into entity('742FL','Floor');
-insert into entity('742FM','Floor');
-insert into entity('742FN','Floor');
-insert into entity('742FP','Floor');
-insert into entity('742FQ','Floor');
-insert into entity('742FR','Floor');
-insert into entity('742FS','Floor');
-insert into entity('742FT','Floor');
-insert into entity('742FU','Floor');
-insert into entity('742FV','Floor');
-insert into entity('742FW','Floor');
-insert into entity('742FX','Floor');
-insert into entity('742F1','Floor');
-insert into entity('742F2','Floor');
-insert into entity('742F3','Floor');
-insert into entity('742F4','Floor');
-insert into entity('742F5','Floor');
-insert into entity('742F6','Floor');
-insert into entity('742F7','Floor');
-insert into entity('742F8','Floor');
-insert into entity('742F9','Floor');
-insert into entity('5888','Trailer');
-insert into entity('148015','Trailer');
-insert into entity('148006','Trailer');
-insert into entity('843','Trailer');
-insert into entity('846','Trailer');
-insert into entity('852','Trailer');
-insert into entity('5029','Trailer');
-insert into entity('3058','Trailer');
-insert into entity('RIC','Terminal');
-insert into entity('RKE','Terminal');
-insert into entity('CLT','Terminal');
-insert into entity('ATL','Terminal');
-insert into entity('NFK','Terminal');
-insert into entity('DNTN','Route');
-insert into entity('ZXTN','Route');
-insert into entity('PETE','Route');
-insert into entity('APPT','Route');
+insert into shipment values(65613541,'18-MAR-17',83, 74.53);
+insert into shipment values(39247393,'18-MAR-17',302, 110.53);
+insert into shipment values(97413454,NULL,2583, 587.34);
+insert into shipment values(95503108,NULL,633, 245.09);
+insert into shipment values(48172764,'18-MAR-17',947, 388.92);
+insert into shipment values(95503090,NULL,1035, 400.17);
 
-insert into shipment(65613541,3/18/17,83, 74.53);
-insert into shipment(39247393,3/18/17,302, 110.53);
-insert into shipment(97413454,NULL,2583, 587.34);
-insert into shipment(95503108,NULL,633, 245.09);
-insert into shipment(48172764,3/18/17,947, 388.92);
-insert into shipment(95503090,NULL,1035, 400.17);
 
-insert into shipmentConditions(65613541,0,0,0);
-insert into shipmentConditions(39247393,0,0,0);
-insert into shipmentConditions(97413454,2,0,0);
-insert into shipmentConditions(95503108,0,1,0);
-insert into shipmentConditions(48172764,0,0,0);
-insert into shipmentConditions(95503090,0,0,1);
+insert into shipmentCondition values(65613541,0,0,0);
+insert into shipmentCondition values(39247393,0,0,0);
+insert into shipmentCondition values(97413454,2,0,0);
+insert into shipmentCondition values(95503108,0,1,0);
+insert into shipmentCondition values(48172764,0,0,0);
+insert into shipmentCondition values(95503090,0,0,1);
 
-insert into address(AddressID_seq.nextval,'1831 Boulevard W', 23230, Richmond, VA);
-insert into address(AddressID_seq.nextval,'115 E Cary st', 23219, Richmond, VA);
-insert into address(AddressID_seq.nextval,'1900 Meadowville Technlogy Pkwy', 23836, Richmond, VA);
-insert into address(AddressID_seq.nextval,'1600 Continental Blvd', 23834, South Chesterfield, VA);
-insert into address(AddressID_seq.nextval,'UNKNOWN', 23150, Sandston, VA);
-insert into address(AddressID_seq.nextval,'2601 Swineford Rd', 23237, North Chesterfield, VA);
-insert into address(AddressID_seq.nextval,'1712 Plantation Rd', 24012, Roanoke, VA);
-insert into address(AddressID_seq.nextval,'7500 Statesville Rd', 28269, Charlotte, NC);
-insert into address(AddressID_seq.nextval,'6125 Duquesne Dr SW', 30336, Atlanta, GA);
-insert into address(AddressID_seq.nextval,'1005 Enterprise Cir', 23321, Chesapeake, VA);
+insert into address values(1,'1831 Boulevard W', 'Richmond', 23220, 'VA');
+insert into address values(AddressID_seq.nextval,'115 E Cary st', 'Richmond', 23214, 'VA');
+insert into address values(2,'1900 Meadowville Technlogy Pkwy', 'Richmond', 23836, 'VA');
+insert into address values(AddressID_seq.nextval,'1600 Continental Blvd','South Chesterfield', 23834, 'VA');
+insert into address values(AddressID_seq.nextval,'UNKNOWN', 'Sandston', 23150, 'VA');
+insert into address values(AddressID_seq.nextval,'2601 Swineford Rd', 'North Chesterfield', 23237, 'VA');
+insert into address values(AddressID_seq.nextval,'1712 Plantation Rd', 'Roanoke', 24012, 'VA');
+insert into address values(AddressID_seq.nextval,'7500 Statesville Rd', 'Charlotte', 28269, 'NC');
+insert into address values(AddressID_seq.nextval,'6125 Duquesne Dr SW', 'Atlanta', 30336, 'GA');
+insert into address values(AddressID_seq.nextval,'1005 Enterprise Cir', 'Chesapeake', 23321, 'VA');
+insert into address values(AddressID_seq.nextval,'18 Powell Lane', 'Fredericksburg', 22406, 'VA');
 
-insert into LoadEvent(EventID_seq.nextval, 3/17/17,65613541);
-insert into LoadEvent(EventID_seq.nextval, 3/17/17,39247393);
-insert into LoadEvent(EventID_seq.nextval, 3/17/17,97413454);
-insert into LoadEvent(EventID_seq.nextval, 3/17/17,95503108);
-insert into LoadEvent(EventID_seq.nextval, 3/17/17,48172764);
-insert into LoadEvent(EventID_seq.nextval, 3/17/17,95503090);
 
-/*****TODO GRAB ADDRESS IDs FROM ADDRESS TABLE*/
-insert into Terminal('RIC','ADDRESS ID HERE');
-insert into Terminal('RKE','ADDRESS ID HERE');
-insert into Terminal('CLT','ADDRESS ID HERE');
-insert into Terminal('ATL','ADDRESS ID HERE');
-insert into Terminal('NFK','ADDRESS ID HERE');
+insert into LoadEvent values(EventID_seq.nextval, '17-MAR-17',65613541);
+insert into LoadEvent values(EventID_seq.nextval, '17-MAR-17',39247393);
+insert into LoadEvent values(EventID_seq.nextval, '17-MAR-17',97413454);
+insert into LoadEvent values(EventID_seq.nextval, '17-MAR-17',95503108);
+insert into LoadEvent values(EventID_seq.nextval, '17-MAR-17',48172764);
+insert into LoadEvent values(EventID_seq.nextval, '17-MAR-17',95503090);
 
-/*****TODO GRAB ADDRESS IDs FROM ADDRESS TABLE*/
-insert into Customer(7421851,'Elegant Draperies', 'ADDRESS ID HERE');
-insert into Customer(7422846,'Foley Company', 'ADDRESS ID HERE');
-insert into Customer(7421978,'Medline Industries', 'ADDRESS ID HERE');
-insert into Customer(7422383,'Sun Chemical Corporation', 'ADDRESS ID HERE');
-insert into Customer(7429683,'Henry Schein Animal Health', 'ADDRESS ID HERE');
+insert into Terminal values('RIC',6);
+insert into Terminal values('RKE',7);
+insert into Terminal values('CLT',8);
+insert into Terminal values('ATL',9);
+insert into Terminal values('NFK',10);
+insert into Terminal values('FRD',11);
 
-insert into CustomerInteractions(65613541,7421851,7421851);
-insert into CustomerInteractions(39247393,7422846,7422846);
-insert into CustomerInteractions(97413454,7421978,7421978);
-insert into CustomerInteractions(95503108,7421978,7421978);
-insert into CustomerInteractions(48172764,7422383,4817264);
-insert into CustomerInteractions(95503090,7429683,7429683);
+insert into Customer values(7421851,'Elegant Draperies', 1);
+insert into Customer values(7422846,'Foley Company', 3);
+insert into Customer values(7421978,'Medline Industries', 2);
+insert into Customer values(7422383,'Sun Chemical Corporation', 4);
+insert into Customer values(7429683,'Henry Schein Animal Health', 5);
 
-insert into Door('RIC',1,NULL);
-insert into Door('RIC',2,480135);
-insert into Door('RIC',3,NULL);
-insert into Door('RIC',4,NULL);
-insert into Door('RIC',5,NULL);
-insert into Door('RIC',6,NULL);
-insert into Door('RIC',7,NULL);
-insert into Door('RIC',8,NULL);
-insert into Door('RIC',9,NULL);
-insert into Door('RIC',10,NULL);
-insert into Door('RIC',11,NULL);
-insert into Door('RIC',12,148056);
-insert into Door('RIC',13,NULL);
-insert into Door('RIC',14,NULL);
-insert into Door('RIC',15,5029);
-insert into Door('RIC',16,NULL);
-insert into Door('RIC',17,NULL);
-insert into Door('RIC',18,NULL);
-insert into Door('RIC',19,NULL);
-insert into Door('RIC',20,NULL);
-insert into Door('RIC',21,148126);
-insert into Door('RIC',22,NULL);
-insert into Door('RIC',23,NULL);
-insert into Door('RIC',24,NULL);
-insert into Door('RIC',25,NULL);
-insert into Door('RIC',26,148006);
-insert into Door('RIC',27,NULL);
-insert into Door('RIC',28,NULL);
-insert into Door('RIC',29,NULL);
-insert into Door('RIC',30,3058);
-insert into Door('RIC',31,NULL);
-insert into Door('RIC',32,NULL);
-insert into Door('RIC',33,NULL);
-insert into Door('RIC',34,148015);
-insert into Door('RIC',35,5888);
-insert into Door('RIC',36,NULL);
-insert into Door('RIC',37,NULL);
-insert into Door('RIC',38,NULL);
-insert into Door('RIC',39,NULL);
-insert into Door('RIC',40,NULL);
-insert into Door('RIC',41,NULL);
-insert into Door('RIC',42,NULL);
-insert into Door('RIC',43,NULL);
-insert into Door('RIC',44,NULL);
-insert into Door('RIC',45,NULL);
-insert into Door('RIC',46,NULL);
-insert into Door('RIC',47,NULL);
-insert into Door('RIC',48,NULL);
-insert into Door('RIC',49,NULL);
-insert into Door('RIC',50,NULL);
-insert into Door('RIC',51,NULL);
+insert into CustomerInteractions values(65613541,7421851,7421851,7421851);
+insert into CustomerInteractions values(39247393,7422846,7422846,7422846);
+insert into CustomerInteractions values(97413454,7421978,7421978,7421978);
+insert into CustomerInteractions values(95503108,7421978,7421978,7421978);
+insert into CustomerInteractions values(48172764,7422383,7421851,7421851);
+insert into CustomerInteractions values(95503090,7429683,7429683,7429683);
 
-insert into Trailer(148006,26,'RIC');
-insert into Trailer(5029,15,'RIC');
-insert into Trailer(148126,21,'RIC');
-insert into Trailer(148056,12,'RIC');
-insert into Trailer(5888,35,'RIC');
-insert into Trailer(480135,2,'RIC');
-insert into Trailer(148015,34,'RIC');
-insert into Trailer(3058,30,'RIC');
-insert into Trailer(843,18,'RIC');
 
-insert into LineHaulTravel(3058,'CLT',03/17/17,'RIC');
-insert into LineHaulTravel(148126,'RIC',03/17/17,'RKE');
-insert into LineHaulTravel(5029,'RIC',03/17/17,'FRD');
-insert into LineHaulTravel(5888,'RIC',03/17/17,'ATL');
-insert into LineHaulTravel(3058,'RIC',03/17/17,'CLT');
+insert into Door VALUES('RIC',1,NULL);
+insert into Door VALUES('RIC',2,'Y');
+insert into Door VALUES('RIC',3,NULL);
+insert into Door VALUES('RIC',4,NULL);
+insert into Door VALUES('RIC',5,NULL);
+insert into Door VALUES('RIC',6,NULL);
+insert into Door VALUES('RIC',7,NULL);
+insert into Door VALUES('RIC',8,NULL);
+insert into Door VALUES('RIC',9,NULL);
+insert into Door VALUES('RIC',10,NULL);
+insert into Door VALUES('RIC',11,NULL);
+insert into Door VALUES('RIC',12,'Y');
+insert into Door VALUES('RIC',13,NULL);
+insert into Door VALUES('RIC',14,NULL);
+insert into Door VALUES('RIC',15,'Y');
+insert into Door VALUES('RIC',16,NULL);
+insert into Door VALUES('RIC',17,NULL);
+insert into Door VALUES('RIC',18,NULL);
+insert into Door VALUES('RIC',19,NULL);
+insert into Door VALUES('RIC',20,NULL);
+insert into Door VALUES('RIC',21,'Y');
+insert into Door VALUES('RIC',22,NULL);
+insert into Door VALUES('RIC',23,NULL);
+insert into Door VALUES('RIC',24,NULL);
+insert into Door VALUES('RIC',25,NULL);
+insert into Door VALUES('RIC',26,'Y');
+insert into Door VALUES('RIC',27,NULL);
+insert into Door VALUES('RIC',28,NULL);
+insert into Door VALUES('RIC',29,NULL);
+insert into Door VALUES('RIC',30,'Y');
+insert into Door VALUES('RIC',31,NULL);
+insert into Door VALUES('RIC',32,NULL);
+insert into Door VALUES('RIC',33,NULL);
+insert into Door VALUES('RIC',34,'Y');
+insert into Door VALUES('RIC',35,'Y');
+insert into Door VALUES('RIC',36,NULL);
+insert into Door VALUES('RIC',37,NULL);
+insert into Door VALUES('RIC',38,NULL);
+insert into Door VALUES('RIC',39,NULL);
+insert into Door VALUES('RIC',40,NULL);
+insert into Door VALUES('RIC',41,NULL);
+insert into Door VALUES('RIC',42,NULL);
+insert into Door VALUES('RIC',43,NULL);
+insert into Door VALUES('RIC',44,NULL);
+insert into Door VALUES('RIC',45,NULL);
+insert into Door VALUES('RIC',46,NULL);
+insert into Door VALUES('RIC',47,NULL);
+insert into Door VALUES('RIC',48,NULL);
+insert into Door VALUES('RIC',49,NULL);
+insert into Door VALUES('RIC',50,NULL);
+insert into Door VALUES('RIC',51,NULL);
 
-insert into CityHaulRoute('843','DNTN');
-insert into CityHaulRoute('480135','ZXTN');
-insert into CityHaulRoute('148015','PETE');
-insert into CityHaulRoute('148056','APPT');
+SELECT * FROM entity order by entity_type;
+insert into Trailer VALUES(148006,26,'RIC');
+insert into Trailer VALUES(5029,15,'RIC');
+insert into Trailer VALUES(5888,35,'RIC');
+insert into Trailer VALUES(148015,34,'RIC');
+insert into Trailer VALUES(3058,30,'RIC');
+insert into Trailer VALUES(843,18,'RIC');
 
-insert into EmployeeWorkPlace(014364,'RIC');
-insert into EmployeeWorkPlace(018580,'RIC');
-insert into EmployeeWorkPlace(014987,'RIC');
-insert into EmployeeWorkPlace(019230,'RIC');
-insert into EmployeeWorkPlace(014855,'RIC');
+INSERT INTO entity VALUES(148126,'Trailer');
+INSERT INTO entity VALUES(148056,'Trailer');
+INSERT INTO entity VALUES(480135,'Trailer');
+insert into Trailer VALUES(148126,21,'RIC');
+insert into Trailer VALUES(148056,12,'RIC');
+insert into Trailer VALUES(480135,2,'RIC');
 
-insert into FloorContents(95503108,'U','RIC');
-insert into FloorContents(97413454,'U','RIC');
+insert into LineHaulTravel VALUES(3058,'CLT','03-MAR-17','RIC');
+insert into LineHaulTravel VALUES(148126,'RIC','03-MAR-17','RKE');
+insert into LineHaulTravel VALUES(5029,'RIC','03-MAR-17','FRD');
+insert into LineHaulTravel VALUES(5888,'RIC','03-MAR-17','ATL');
+insert into LineHaulTravel VALUES(3058,'RIC','03-MAR-17','CLT');
 
-insert into ShipmentTravels(65613541,'CLT','RIC','RIC');
-insert into ShipmentTravels(39247393,'CLT','RIC','RIC');
-insert into ShipmentTravels(95503108,'CLT','RIC','RIC');
-insert into ShipmentTravels(97413454,'CLT','RIC','RIC');
+insert into CityHaulRoute VALUES('843','DNTN');
+insert into CityHaulRoute VALUES('480135','ZXTN');
+insert into CityHaulRoute VALUES('148015','PETE');
+insert into CityHaulRoute VALUES('148056','APPT');
 
-insert into shipmentLoose(6561341,0,0);
-insert into shipmentLoose(39247393,0,0);
-insert into shipmentLoose(97413454,0,0);
-insert into shipmentLoose(95503066,0,0);
-insert into shipmentLoose(48172764,0,0);
-insert into shipmentLoose(95503090,0,0);
+insert into EmployeeWorkPlace VALUES(014364,'RIC');
+insert into EmployeeWorkPlace VALUES(018580,'RIC');
+insert into EmployeeWorkPlace VALUES(014987,'RIC');
+insert into EmployeeWorkPlace VALUES(019230,'RIC');
+insert into EmployeeWorkPlace VALUES(014855,'RIC');
 
-insert into TerminalTrailers('RIC','843');
-insert into TerminalTrailers('RIC','846');
-insert into TerminalTrailers('RIC','852');
-insert into TerminalTrailers('RIC','148006');
-insert into TerminalTrailers('RIC','5888');
-insert into TerminalTrailers('RIC','5029');
-insert into TerminalTrailers('RIC','148015');
+insert into FloorContents VALUES(95503108,'742FU','RIC');
+insert into FloorContents VALUES(97413454,'742FU','RIC');
 
-insert into shipmentsPallets(PalletID_seq.nextval,65613541,83,1);
-insert into shipmentsPallets(PalletID_seq.nextval,97413454,369,1);
-insert into shipmentsPallets(PalletID_seq.nextval,97413454,1002,1);
-insert into shipmentsPallets(PalletID_seq.nextval,97413454,369,1);
-insert into shipmentsPallets(PalletID_seq.nextval,97413454,458,1);
-insert into shipmentsPallets(PalletID_seq.nextval,97413454,205,1);
-insert into shipmentsPallets(PalletID_seq.nextval,97413454,369,1);
-insert into shipmentsPallets(PalletID_seq.nextval,97413454,136,1);
-insert into shipmentsPallets(PalletID_seq.nextval,48172764,402,1);
-insert into shipmentsPallets(PalletID_seq.nextval,48172764,545,1);
+insert into ShipmentTravels VALUES(65613541,'CLT','RIC','RIC');
+insert into ShipmentTravels VALUES(39247393,'CLT','RIC','RIC');
+insert into ShipmentTravels VALUES(95503108,'CLT','RIC','RIC');
+insert into ShipmentTravels VALUES(97413454,'CLT','RIC','RIC');
 
-insert into TerminalFloors('RIC','A');
-insert into TerminalFloors('RIC','B');
-insert into TerminalFloors('RIC','C');
-insert into TerminalFloors('RIC','D');
-insert into TerminalFloors('RIC','E');
-insert into TerminalFloors('RIC','F');
-insert into TerminalFloors('RIC','G');
-insert into TerminalFloors('RIC','H');
-insert into TerminalFloors('RIC','I');
-insert into TerminalFloors('RIC','J');
-insert into TerminalFloors('RIC','K');
-insert into TerminalFloors('RIC','L');
-insert into TerminalFloors('RIC','M');
-insert into TerminalFloors('RIC','N');
-insert into TerminalFloors('RIC','P');
-insert into TerminalFloors('RIC','Q');
-insert into TerminalFloors('RIC','R');
-insert into TerminalFloors('RIC','S');
-insert into TerminalFloors('RIC','T');
-insert into TerminalFloors('RIC','U');
-insert into TerminalFloors('RIC','V');
-insert into TerminalFloors('RIC','W');
-insert into TerminalFloors('RIC','X');
-insert into TerminalFloors('RIC','1');
-insert into TerminalFloors('RIC','2');
-insert into TerminalFloors('RIC','3');
-insert into TerminalFloors('RIC','4');
-insert into TerminalFloors('RIC','5');
-insert into TerminalFloors('RIC','6');
-insert into TerminalFloors('RIC','7');
-insert into TerminalFloors('RIC','8');
-insert into TerminalFloors('RIC','9');
+insert into shipmentLoose VALUES(65613541,0,0);
+insert into shipmentLoose VALUES(39247393,0,0);
+insert into shipmentLoose VALUES(97413454,0,0);
+insert into shipmentLoose VALUES(95503108,0,0);
+insert into shipmentLoose VALUES(48172764,0,0);
+insert into shipmentLoose VALUES(95503090,0,0);
 
-/*TODO Grab EVENT IDs HERE */
-insert into EventEmployees(EVENTID GOES HERE, 014364);
-insert into EventEmployees(EVENTID GOES HERE, 018580);
-insert into EventEmployees(EVENTID GOES HERE, 014987);
-insert into EventEmployees(EVENTID GOES HERE, 019230);
-insert into EventEmployees(EVENTID GOES HERE, 014855);
-insert into EventEmployees(EVENTID GOES HERE, 014364);
+describe entity;
+select * from terminaltrailers;
+insert into TerminalTrailers VALUES('RIC','843');
+insert into trailer values (846, 18, 'RIC');
+insert into TerminalTrailers VALUES('RIC','846');
+insert into trailer values (852, 18, 'RIC');
+insert into TerminalTrailers VALUES('RIC','852');
+insert into TerminalTrailers VALUES('RIC','148006');
+insert into TerminalTrailers VALUES('RIC','5888');
+insert into TerminalTrailers VALUES('RIC','5029');
+insert into TerminalTrailers VALUES('RIC','148015');
+
+insert into shipmentPallets VALUES(PalletID_seq.nextval,65613541,83,1);
+insert into shipmentPallets VALUES(PalletID_seq.nextval,97413454,369,1);
+insert into shipmentPallets VALUES(PalletID_seq.nextval,97413454,1002,1);
+insert into shipmentPallets VALUES(PalletID_seq.nextval,97413454,369,1);
+insert into shipmentPallets VALUES(PalletID_seq.nextval,97413454,458,1);
+insert into shipmentPallets VALUES(PalletID_seq.nextval,97413454,205,1);
+insert into shipmentPallets VALUES(PalletID_seq.nextval,97413454,369,1);
+insert into shipmentPallets VALUES(PalletID_seq.nextval,97413454,136,1);
+insert into shipmentPallets VALUES(PalletID_seq.nextval,48172764,402,1);
+insert into shipmentPallets VALUES(PalletID_seq.nextval,48172764,545,1);
+
+insert into TerminalFloors VALUES('RIC','742FA');
+insert into TerminalFloors VALUES('RIC','742FB');
+insert into TerminalFloors VALUES('RIC','742FC');
+insert into TerminalFloors VALUES('RIC','742FD');
+insert into TerminalFloors VALUES('RIC','742FE');
+insert into TerminalFloors VALUES('RIC','742FF');
+insert into TerminalFloors VALUES('RIC','742FG');
+insert into TerminalFloors VALUES('RIC','742FH');
+insert into TerminalFloors VALUES('RIC','742FI');
+insert into TerminalFloors VALUES('RIC','742FJ');
+insert into TerminalFloors VALUES('RIC','742FK');
+insert into TerminalFloors VALUES('RIC','742FL');
+insert into TerminalFloors VALUES('RIC','742FM');
+insert into TerminalFloors VALUES('RIC','742FN');
+insert into TerminalFloors VALUES('RIC','742FP');
+insert into TerminalFloors VALUES('RIC','742FQ');
+insert into TerminalFloors VALUES('RIC','742FR');
+insert into TerminalFloors VALUES('RIC','742FS');
+insert into TerminalFloors VALUES('RIC','742FT');
+insert into TerminalFloors VALUES('RIC','742FU');
+insert into TerminalFloors VALUES('RIC','742FV');
+insert into TerminalFloors VALUES('RIC','742FW');
+insert into TerminalFloors VALUES('RIC','742FX');
+insert into TerminalFloors VALUES('RIC','742F1');
+insert into TerminalFloors VALUES('RIC','742F2');
+insert into TerminalFloors VALUES('RIC','742F3');
+insert into TerminalFloors VALUES('RIC','742F4');
+insert into TerminalFloors VALUES('RIC','742F5');
+insert into TerminalFloors VALUES('RIC','742F6');
+insert into TerminalFloors VALUES('RIC','742F7');
+insert into TerminalFloors VALUES('RIC','742F8');
+insert into TerminalFloors VALUES('RIC','742F9');
+
+insert into EventEmployees VALUES(1, 014364);
+insert into EventEmployees VALUES(2, 018580);
+insert into EventEmployees VALUES(3, 014987);
+insert into EventEmployees VALUES(4, 019230);
+insert into EventEmployees VALUES(5, 014855);
+insert into EventEmployees VALUES(6, 014364);
