@@ -1,7 +1,5 @@
 CREATE TABLE Employee(
 EmpID number (7) not null,
-/*will eventually convert to varchar for actual implementation
-CONSTRAINT emp_id_format CHECK (REGEXP_LIKE(EmpID,'[0-9]{6}')),*/
 First_Name varchar2(25),
 Last_Name varchar2(25),
 Wage float
@@ -46,16 +44,17 @@ create table LoadEvent(
 EventID number (10) not null,
 "Date" DATE not null,
 ProNumber number (8),
+Origin varchar2,
+Destination varchar2,
 Primary key (EventID),
+Foreign key(Origin) references Entity(EntityID),
+Foreign key(Destination) references Entity(EntityID)
 CONSTRAINT loadEv_proNum_fk Foreign key (ProNumber) references Shipment(ProNumber)
 );
 
 create table Terminal(
 TerminalID varchar2(10) not null,
-StreetAddress varchar2(40) not null,
-ZipCode number (5)not null,
-City varchar2(20) not null,
-State varchar2(2),
+AddressID number not null,
 Primary key(TerminalID),
 Foreign key(TerminalID) references Entity(EntityID)
 );
@@ -64,10 +63,6 @@ create table Customer(
 ID number(7) not null,
 Name varchar2(25) not null,
 AddressID number(10) not null,
-StreetAddress varchar2(40),
-ZipCode number(5) not null,
-City varchar2(20),
-State varchar2(2),
 Primary key(ID),
 CONSTRAINT cust_addrID_fk FOREIGN KEY (AddressID) REFERENCES Address(AddressID)
 );
@@ -81,7 +76,8 @@ Primary key(ProNumber),
 Foreign key(ProNumber) references Shipment(ProNumber),
 Foreign key(Shipper) references Customer(ID),
 Foreign key(Consignee) references Customer(ID),
-Foreign key(isPaying) references Customer(ID));
+Foreign key(isPaying) references Customer(ID)
+);
 
 create table Door(
 TerminalID varchar2(10) not null,
@@ -89,15 +85,7 @@ DoorNumber number(4) not null,
 Occupied varchar2(1),
 Primary key(DoorNumber,TerminalID),
 Foreign key(TerminalID) references Terminal(TerminalID)
-);
-
-create table Trailer(
-TrailerNumber varchar2(10) not null,
-DoorNumber number(3) not null,
-TerminalID varchar2(10),
-Primary key (TrailerNumber),
-Foreign key (TrailerNumber) references Entity(EntityID),
-Foreign key (DoorNumber,TerminalID) references Door(DoorNumber,TerminalID)
+Foreign key(Occupied) references Entity(EntityID)
 );
 
 create table LineHaulTravel(
@@ -106,7 +94,7 @@ Origin varchar2(10) not null,
 "Date" date not null,
 Destination varchar2(10) not null,
 Primary key(TrailerNumber, Origin, "Date"),
-Foreign key(TrailerNumber) references Trailer(TrailerNumber),
+Foreign key(TrailerNumber) references Entity(EntityID),
 Foreign key(Origin) references Terminal(TerminalID),
 Foreign key(Destination) references Terminal(TerminalID)
 );
@@ -115,7 +103,7 @@ create table CityHaulRoute(
 TrailerNumber varchar(10) not null,
 Route varchar2(10),
 Primary key(Trailernumber),
-Foreign key(Trailernumber) references Trailer(TrailerNumber),
+Foreign key(Trailernumber) references Entity(EntityID),
 Foreign key(Route) references Entity(EntityID)
 );
 
@@ -134,7 +122,8 @@ TerminalID VARCHAR2(10),
 Primary key(ProNumber),
 Foreign key(ProNumber) references Shipment(ProNumber),
 Foreign key(FloorID) references Entity(EntityID),
-Foreign key(TerminalID) references Terminal(TerminalID));
+Foreign key(TerminalID) references Terminal(TerminalID)
+);
 
 create table ShipmentTravels(
 ProNumber NUMBER(8) not null,
@@ -143,9 +132,9 @@ Destination VARCHAR2(10),
 CurrentLocation VARCHAR2(10),
 Primary key(ProNumber),
 Foreign key(ProNumber) references Shipment(ProNumber),
-Foreign key(Origin) references Terminal(TerminalID),
-Foreign key(Destination) references Terminal(TerminalID),
-Foreign key(CurrentLocation) references Terminal(TerminalID)
+Foreign key(Origin) references Entity(EntityID),
+Foreign key(Destination) references Entity(EntityID),
+Foreign key(CurrentLocation) references Entity(EntityID)
 );
 
 create table shipmentLoose(
@@ -153,14 +142,17 @@ ProNumber NUMBER(8) NOT NULL,
 Cube number(4),
 Quantity number(4),
 Primary key(ProNumber),
-Foreign key(ProNumber) references Shipment(ProNumber));
+Foreign key(ProNumber) references Shipment(ProNumber)
+);
 
+--terminal trailers are trailers that are stored in the yard
 create table TerminalTrailers(
 TerminalID varchar2(10),
 TrailerNumber varchar2(10),
 Primary key(TerminalID, TrailerNumber),
 Foreign key(TerminalID) references Terminal(TerminalID),
-Foreign key(TrailerNumber) references Trailer(TrailerNumber));
+Foreign key(TrailerNumber) references Trailer(TrailerNumber)
+);
 
 create table ShipmentPallets(
 PalletID number(8) not null,
@@ -187,13 +179,70 @@ foreign key(EventID) references LoadEvent(EventID),
 foreign key(EmpID) references Employee(EmpID)
 );
 
+/*--------------------Queries-----------------------------------*/
+/*You can use this query to see all the shipments contained in an entity, whether it be a trailer, floor or terminal*/
+select s.Pronumber
+from ShipmentTravels s join entity e
+on s.currentLocation=e.EntityID
+where e.EntityID='$trailer_number';
+
+/*--------------------Procedures--------------------------------*/
+
+/*This procedure should be used every time a new shipment is created so that
+you also insert the shipment into the shipment travels so that your able to track the shipment*/
+create or replace procedure newShipment(
+p_ProNumber in Shipment.ProNumber%TYPE,
+p_Duedate in Shipment.date%TYPE,
+p_TotalWeight in Shipment.TotalWeight,
+p_Price in Shipment.Price,
+p_origin in ShipmentTravels.origin,
+p_destination in ShipmentTravels.destination)
+IS
+Begin
+insert into shipment values(p_ProNumber,p_Duedate,p_TotalWeight, p_Price);
+insert into shipmentTravels values(p_ProNumber,p_origin,p_destination,p_origin);
+End;
+)
+
+/*This is used to insert a new customer properly*/
+create or replace procedure newCustomer(
+p_name in Customer.Name%TYPE,
+p_StreetAddress in Address.StreetAddress%TYPE,
+p_ZipCode in Address.ZipCode%TYPE,
+p_City in Address.City%TYPE,
+p_State in Address.State%TYPE)
+IS
+Begin
+insert into address values(AddressID_seq.nextval,p_StreetAddress,p_ZipCode, p_City,p_State);
+insert into Customer values(p_name,AddressID_seq.nextval);--need to use above addressID!!!
+End;
+
+/*This is used to insert a new Terminal properly */
+create or replace procedure newTerminal(
+p_Terminal in Terminal.TerminalID%TYPE,
+p_StreetAddress in Address.StreetAddress%TYPE,
+p_ZipCode in Address.ZipCode%TYPE,
+p_City in Address.City%TYPE,
+p_State in Address.State%TYPE)
+IS
+Begin
+insert into address values(AddressID_seq.nextval,p_StreetAddress,p_ZipCode, p_City,p_State);
+insert into Customer values(p_Terminal,AddressID_seq.nextval);--need to use above addressID!!!
+End;
+
+
 /*--------------------Views-------------------------------------*/
-/* create a view that shows the Terminal and its full address*/
-create view TerminalAddresses(Terminal_id,StreetAddress,City,ZipCode,state)
+/* view that shows the Terminal and its full address*/
+create view TerminalAddresses(terminalID,StreetAddress,City,ZipCode,state)
 as
-select terminalID,terminal.StreetAddress,terminal.City,terminal.ZipCode,terminal.State
-from terminal 
-join Address on terminal.AddressID=Address.AddressID;
+select terminalID,Address.StreetAddress,Address.City,Address.ZipCode,Address.State
+from terminal join Address on terminal.AddressID=Address.AddressID;
+
+/* view that shows the customer and their full address*/
+create view CustomerAddresses(Terminal_id,StreetAddress,City,ZipCode,state)
+as
+select customerID,Address.StreetAddress,Address.City,Address.ZipCode,Address.State
+from Customer join Address on customerID.AddressID=Address.AddressID;
 
 /*--------------------Sequences----------------------------------*/
 
@@ -218,6 +267,19 @@ MAXVALUE
 INCREMENT BY 1
 NOCYCLE;
 
+/*--------------------Triggers---------------------------------*/
+
+/* After a new Event is created, we use the destination of the new event as the current location of 
+the shipment.*/
+create or replace trigger updateShipmentLocation
+After insert EventID on LoadEvent
+for each row
+begin 
+update table shipmentTravels
+set currentLocation = (select destination from LoadEvent where eventID=new:eventID)
+where proNumber=(select proNumber from LoadEvent where eventID=new:eventID)
+end;
+
 /*--------------------DATABASE POPULATION------------------------*/
 insert into employee values(014364,'Taylor','Nelson',17.85);
 insert into employee values(018580,'John','Smith',17.85);
@@ -225,7 +287,6 @@ insert into employee values(014987,'Jermel','Simmons',14.00);
 insert into employee values(019230,'Mike','Thompson',17.85);
 insert into employee values(014855,'Allan','Jones',14.00);
 
-select * from employee;
 insert into entity values('742FA','Floor');
 insert into entity values('742FB','Floor');
 insert into entity values('742FC','Floor');
@@ -258,6 +319,7 @@ insert into entity values('742F6','Floor');
 insert into entity values('742F7','Floor');
 insert into entity values('742F8','Floor');
 insert into entity values('742F9','Floor');
+
 insert into entity values('5888','Trailer');
 insert into entity values('148015','Trailer');
 insert into entity values('148006','Trailer');
@@ -266,12 +328,17 @@ insert into entity values('846','Trailer');
 insert into entity values('852','Trailer');
 insert into entity values('5029','Trailer');
 insert into entity values('3058','Trailer');
+INSERT INTO entity VALUES(148126,'Trailer');
+INSERT INTO entity VALUES(148056,'Trailer');
+INSERT INTO entity VALUES(480135,'Trailer');
+
 insert into entity values('RIC','Terminal');
 insert into entity values('RKE','Terminal');
 insert into entity values('CLT','Terminal');
 insert into entity values('ATL','Terminal');
 insert into entity values('NFK','Terminal');
 insert into entity values('FRD','Terminal');
+
 insert into entity values('DNTN','Route');
 insert into entity values('ZXTN','Route');
 insert into entity values('PETE','Route');
@@ -284,7 +351,6 @@ insert into shipment values(95503108,NULL,633, 245.09);
 insert into shipment values(48172764,'18-MAR-17',947, 388.92);
 insert into shipment values(95503090,NULL,1035, 400.17);
 
-
 insert into shipmentCondition values(65613541,0,0,0);
 insert into shipmentCondition values(39247393,0,0,0);
 insert into shipmentCondition values(97413454,2,0,0);
@@ -292,9 +358,9 @@ insert into shipmentCondition values(95503108,0,1,0);
 insert into shipmentCondition values(48172764,0,0,0);
 insert into shipmentCondition values(95503090,0,0,1);
 
-insert into address values(1,'1831 Boulevard W', 'Richmond', 23220, 'VA');
+insert into address values(AddressID_seq.nextval,'1831 Boulevard W', 'Richmond', 23220, 'VA');
 insert into address values(AddressID_seq.nextval,'115 E Cary st', 'Richmond', 23214, 'VA');
-insert into address values(2,'1900 Meadowville Technlogy Pkwy', 'Richmond', 23836, 'VA');
+insert into address values(AddressID_seq.nextval,'1900 Meadowville Technlogy Pkwy', 'Richmond', 23836, 'VA');
 insert into address values(AddressID_seq.nextval,'1600 Continental Blvd','South Chesterfield', 23834, 'VA');
 insert into address values(AddressID_seq.nextval,'UNKNOWN', 'Sandston', 23150, 'VA');
 insert into address values(AddressID_seq.nextval,'2601 Swineford Rd', 'North Chesterfield', 23237, 'VA');
@@ -303,7 +369,6 @@ insert into address values(AddressID_seq.nextval,'7500 Statesville Rd', 'Charlot
 insert into address values(AddressID_seq.nextval,'6125 Duquesne Dr SW', 'Atlanta', 30336, 'GA');
 insert into address values(AddressID_seq.nextval,'1005 Enterprise Cir', 'Chesapeake', 23321, 'VA');
 insert into address values(AddressID_seq.nextval,'18 Powell Lane', 'Fredericksburg', 22406, 'VA');
-
 
 insert into LoadEvent values(EventID_seq.nextval, '17-MAR-17',65613541);
 insert into LoadEvent values(EventID_seq.nextval, '17-MAR-17',39247393);
@@ -332,9 +397,8 @@ insert into CustomerInteractions values(95503108,7421978,7421978,7421978);
 insert into CustomerInteractions values(48172764,7422383,7421851,7421851);
 insert into CustomerInteractions values(95503090,7429683,7429683,7429683);
 
-
 insert into Door VALUES('RIC',1,NULL);
-insert into Door VALUES('RIC',2,'Y');
+insert into Door VALUES('RIC',2,'480135');
 insert into Door VALUES('RIC',3,NULL);
 insert into Door VALUES('RIC',4,NULL);
 insert into Door VALUES('RIC',5,NULL);
@@ -344,30 +408,30 @@ insert into Door VALUES('RIC',8,NULL);
 insert into Door VALUES('RIC',9,NULL);
 insert into Door VALUES('RIC',10,NULL);
 insert into Door VALUES('RIC',11,NULL);
-insert into Door VALUES('RIC',12,'Y');
+insert into Door VALUES('RIC',12,'148056');
 insert into Door VALUES('RIC',13,NULL);
 insert into Door VALUES('RIC',14,NULL);
-insert into Door VALUES('RIC',15,'Y');
+insert into Door VALUES('RIC',15,'5029');
 insert into Door VALUES('RIC',16,NULL);
 insert into Door VALUES('RIC',17,NULL);
 insert into Door VALUES('RIC',18,NULL);
 insert into Door VALUES('RIC',19,NULL);
 insert into Door VALUES('RIC',20,NULL);
-insert into Door VALUES('RIC',21,'Y');
+insert into Door VALUES('RIC',21,'148126');
 insert into Door VALUES('RIC',22,NULL);
 insert into Door VALUES('RIC',23,NULL);
 insert into Door VALUES('RIC',24,NULL);
 insert into Door VALUES('RIC',25,NULL);
-insert into Door VALUES('RIC',26,'Y');
+insert into Door VALUES('RIC',26,'148006');
 insert into Door VALUES('RIC',27,NULL);
 insert into Door VALUES('RIC',28,NULL);
 insert into Door VALUES('RIC',29,NULL);
-insert into Door VALUES('RIC',30,'Y');
+insert into Door VALUES('RIC',30,'3058');
 insert into Door VALUES('RIC',31,NULL);
 insert into Door VALUES('RIC',32,NULL);
 insert into Door VALUES('RIC',33,NULL);
-insert into Door VALUES('RIC',34,'Y');
-insert into Door VALUES('RIC',35,'Y');
+insert into Door VALUES('RIC',34,'148015');
+insert into Door VALUES('RIC',35,'5888');
 insert into Door VALUES('RIC',36,NULL);
 insert into Door VALUES('RIC',37,NULL);
 insert into Door VALUES('RIC',38,NULL);
@@ -384,21 +448,6 @@ insert into Door VALUES('RIC',48,NULL);
 insert into Door VALUES('RIC',49,NULL);
 insert into Door VALUES('RIC',50,NULL);
 insert into Door VALUES('RIC',51,NULL);
-
-SELECT * FROM entity order by entity_type;
-insert into Trailer VALUES(148006,26,'RIC');
-insert into Trailer VALUES(5029,15,'RIC');
-insert into Trailer VALUES(5888,35,'RIC');
-insert into Trailer VALUES(148015,34,'RIC');
-insert into Trailer VALUES(3058,30,'RIC');
-insert into Trailer VALUES(843,18,'RIC');
-
-INSERT INTO entity VALUES(148126,'Trailer');
-INSERT INTO entity VALUES(148056,'Trailer');
-INSERT INTO entity VALUES(480135,'Trailer');
-insert into Trailer VALUES(148126,21,'RIC');
-insert into Trailer VALUES(148056,12,'RIC');
-insert into Trailer VALUES(480135,2,'RIC');
 
 insert into LineHaulTravel VALUES(3058,'CLT','03-MAR-17','RIC');
 insert into LineHaulTravel VALUES(148126,'RIC','03-MAR-17','RKE');
@@ -432,17 +481,9 @@ insert into shipmentLoose VALUES(95503108,0,0);
 insert into shipmentLoose VALUES(48172764,0,0);
 insert into shipmentLoose VALUES(95503090,0,0);
 
-describe entity;
-select * from terminaltrailers;
 insert into TerminalTrailers VALUES('RIC','843');
-insert into trailer values (846, 18, 'RIC');
 insert into TerminalTrailers VALUES('RIC','846');
-insert into trailer values (852, 18, 'RIC');
 insert into TerminalTrailers VALUES('RIC','852');
-insert into TerminalTrailers VALUES('RIC','148006');
-insert into TerminalTrailers VALUES('RIC','5888');
-insert into TerminalTrailers VALUES('RIC','5029');
-insert into TerminalTrailers VALUES('RIC','148015');
 
 insert into shipmentPallets VALUES(PalletID_seq.nextval,65613541,83,1);
 insert into shipmentPallets VALUES(PalletID_seq.nextval,97413454,369,1);
