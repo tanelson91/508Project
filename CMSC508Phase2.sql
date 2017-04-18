@@ -115,7 +115,7 @@ Foreign key(EmpID) references Employee(EmpID),
 Foreign key(TerminalID) references Terminal(TerminalID)
 );
 
-create table FloorContents(
+create table FloorContents(--
 ProNumber NUMBER(8) not null,
 FloorID VARCHAR2(10),
 TerminalID VARCHAR2(10),
@@ -151,7 +151,7 @@ TerminalID varchar2(10),
 TrailerNumber varchar2(10),
 Primary key(TerminalID, TrailerNumber),
 Foreign key(TerminalID) references Terminal(TerminalID),
-Foreign key(TrailerNumber) references Trailer(TrailerNumber)
+Foreign key(TrailerNumber) references Entity(EntityID)--oops forgot to change this to entity need to remake this table.
 );
 
 create table ShipmentPallets(
@@ -193,14 +193,18 @@ you also insert the shipment into the shipment travels so that your able to trac
 create or replace procedure newShipment(
 p_ProNumber in Shipment.ProNumber%TYPE,
 p_Duedate in Shipment.date%TYPE,
-p_TotalWeight in Shipment.TotalWeight,
-p_Price in Shipment.Price,
-p_origin in ShipmentTravels.origin,
-p_destination in ShipmentTravels.destination)
+p_TotalWeight in Shipment.TotalWeight%TYPE,
+p_Price in Shipment.Price%TYPE,
+p_origin in ShipmentTravels.origin%TYPE,
+p_destination in ShipmentTravels.destination%TYPE,
+p_shipper in Customer.ID%TYPE,
+p_consignee in Customer.ID%TYPE,
+p_isPaying in Customer.ID%TYPE)
 IS
 Begin
 insert into shipment values(p_ProNumber,p_Duedate,p_TotalWeight, p_Price);
 insert into shipmentTravels values(p_ProNumber,p_origin,p_destination,p_origin);
+insert into CustomerInteraction values(p_ProNumber,p_shipper,p_consignee,p_isPaying);
 End;
 )
 
@@ -212,9 +216,11 @@ p_ZipCode in Address.ZipCode%TYPE,
 p_City in Address.City%TYPE,
 p_State in Address.State%TYPE)
 IS
+adrID;--
 Begin
-insert into address values(AddressID_seq.nextval,p_StreetAddress,p_ZipCode, p_City,p_State);
-insert into Customer values(p_name,AddressID_seq.nextval);--need to use above addressID!!!
+adrID := AddressID_seq.nextval;--
+insert into address values(adrID,p_StreetAddress,p_ZipCode, p_City,p_State);
+insert into Customer values(p_name,adrID);--need to use above addressID!!!
 End;
 
 /*This is used to insert a new Terminal properly */
@@ -225,11 +231,26 @@ p_ZipCode in Address.ZipCode%TYPE,
 p_City in Address.City%TYPE,
 p_State in Address.State%TYPE)
 IS
+adrID;--
 Begin
-insert into address values(AddressID_seq.nextval,p_StreetAddress,p_ZipCode, p_City,p_State);
-insert into Customer values(p_Terminal,AddressID_seq.nextval);--need to use above addressID!!!
+adrID := AddressID_seq.nextval;--
+insert into address values(adrID,p_StreetAddress,p_ZipCode, p_City,p_State);
+insert into Entity values(p_terminal,'Terminal');
+insert into Terminal values(p_Terminal,adrID);--need to use above addressID!!!
 End;
 
+/*This is used to insert a new Employee properly */
+create or replace procedure newEmployee(
+p_EmpID in Employee.EmpID%TYPE,
+p_FirstName in Employee.FirstName%TYPE,
+p_LastName in Employee.LastName%TYPE,
+p_wage in Employee.Wage%TYPE,
+p_terminalID in Entity.EntityID%TYPE)
+IS
+Begin
+insert into Employee values(p_EmpID,p_FirstName,p_LastName,p_wage);
+insert into EmployeeWorkPlace values(p_EmpID,p_terminalID);
+End;
 
 /*--------------------Views-------------------------------------*/
 /* view that shows the Terminal and its full address*/
@@ -279,6 +300,36 @@ update table shipmentTravels
 set currentLocation = (select destination from LoadEvent where eventID=new:eventID)
 where proNumber=(select proNumber from LoadEvent where eventID=new:eventID)
 end;
+
+/*----------------------Ideas------------------------------------*/
+--when inserting into employee, must also register employee work place----------
+--After inserting an employee select that employee and display it
+--when deleting an employee enter the employee ID and display then employee, followed by a button to delete that employee if it is the one you want to delete.
+
+--when creating a shipment we also need to add to the CustomerInteraction table---
+
+/*Upon successful insertion into the shipments table we need to take the user to a webpage that allows them to enter in the fields for inserting pallets, followed by a page that allows you to enter in fields for loose pieces*/
+--when inserting a shipment we also need to add to the shipmentloose table
+--when inserting a shipment we also need to add to the shipmentPallets table
+
+/*Need a page for the trucker to enter in his origin, destination and trailer number*/
+--whenever a linehaul leaves the terminal it must insert into the LineHaulTravel
+
+/*An employee should be able to update shipment conditions at any time, maybe a page for this?*/
+--need to be able to update shipmentConditions
+
+--when inserting into terminal insert it into entity first---
+
+--floor contents should be able to be replaced with a query along the lines of "show all the shipments whose current location is a given floor number???
+
+--Shipment Travels procedure is already written, it updates the shipments current location.
+
+/*after successful insertion into the loadEvent table take the user to a webpage that allows them to enter in the fields for inserting employees into EventEmployees, this works similarly as adding pallets to shipments*/
+--when inserting into loadEvent we need to insert the employees worked on the event into EventEmployees
+
+----------BONUS IDEAS------------
+
+--If we wanted to get fancy we could write a procedure for inserting into LoadEvent where we automatically grab the "origin" from the shipments current location
 
 /*--------------------DATABASE POPULATION------------------------*/
 insert into employee values(014364,'Taylor','Nelson',17.85);
