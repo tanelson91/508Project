@@ -3,7 +3,7 @@ Brandon Harris and Taylor Nelson CMSC 508 Database Project
 
 
 /*----------------------Ideas------------------------------------*/
---when inserting into employee, must also register employee work place----------DONE
+--when inserting into employee, must also register employee work place----------DONE<br>
 --After inserting an employee select that employee and display it
 --when deleting an employee enter the employee ID and display then employee, followed by a button to delete that employee if it is the one you want to delete.
 
