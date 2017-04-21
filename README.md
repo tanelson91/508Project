@@ -5,7 +5,7 @@ Brandon Harris and Taylor Nelson CMSC 508 Database Project
 /*----------------------Ideas------------------------------------*/<br>
 --when inserting into employee, must also register employee work place----------DONE<br>
 --After inserting an employee select that employee and display it--------DONE<br>
---when deleting an employee enter the employee ID and display then employee, followed by a button to delete that employee if it is the one you want to delete.<br>
+--when deleting an employee enter the employee ID and display then employee, followed by a button to delete that employee if it is the one you want to delete.----------DONE<br>
 
 --when creating a shipment we also need to add to the CustomerInteraction table----------DONE<br>
 
