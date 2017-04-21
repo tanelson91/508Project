@@ -16,7 +16,7 @@ create or replace trigger updateEmployeeWorkPlace
 After delete on employee
 for each row
 begin 
-delete EmployeeWorkPlace where empID=:old.empID
+delete from EmployeeWorkPlace where empID=:old.empID
 end;
 
 /*Bonus trigger: if employees do more than 40 events in a day give them a bonus*/
