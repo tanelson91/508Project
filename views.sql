@@ -17,3 +17,10 @@ as
 select proNumber, DueDate, TotalWeight,price Count(pallets), quantity
 from shipment natural join pallets, natural join Loose
 group by proNumber;
+
+
+/*View for that shows all information of a particular shipment */
+create view Shipment2_VU(ProNumber, DueDate, TotalWeight, price, originTerm, DestinationTerm, CurrentTerm Shipper, Consignee)
+as
+select proNumber, DueDate, TotalWeight,price, origin, destination, currentlocation, shipper, consignee, ispaying
+from shipment natural join ShipmentTravels natural join CustomerInteractions;
