@@ -27,7 +27,7 @@ from shipment natural join ShipmentTravels natural join CustomerInteractions;
 
 
 /*View that shows after a loadEvent is created */
-create view LoadEvent_VU(ProNumber, Date , Employee, origin, CurrentLocation, EventID)
+create view LoadEvent_VU(ProNumber, "Date" , Employee, origin, CurrentLocation, EventID)
 as
-select proNumber, Date, EmpID, origin, Destination, EventID
+select proNumber, "Date", EmpID, origin, Destination, EventID
 from LoadEvent natural join EventEmployees;
