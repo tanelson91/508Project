@@ -4,8 +4,8 @@
 you also insert the shipment into the shipment travels so that your able to track the shipment*/
 create or replace procedure newShipment(
 p_ProNumber in Shipment.ProNumber%TYPE,
-p_Duedate in Shipment.date%TYPE,
-p_TotalWeight in Shipment.TotalWeight%TYPE,
+p_Duedate varchar2(10),
+p_TotalWeight in Shipment.TotalWep_Duight%TYPE,
 p_Price in Shipment.Price%TYPE,
 p_origin in ShipmentTravels.origin%TYPE,
 p_destination in ShipmentTravels.destination%TYPE,
@@ -14,7 +14,7 @@ p_consignee in Customer.ID%TYPE,
 p_isPaying in Customer.ID%TYPE)
 IS
 Begin
-insert into shipment values(p_ProNumber,p_Duedate,p_TotalWeight, p_Price);
+insert into shipment values(p_ProNumber,TO_DATE(p_Duedate,'MM/DD/YY'),p_TotalWeight, p_Price);
 insert into shipmentTravels values(p_ProNumber,p_origin,p_destination,p_origin);
 insert into CustomerInteraction values(p_ProNumber,p_shipper,p_consignee,p_isPaying);
 End;
