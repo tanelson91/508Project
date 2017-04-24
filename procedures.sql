@@ -70,7 +70,6 @@ p_origin in Entity.EntityID%TYPE,
 p_destination in Entity.EntityID%TYPE
 p_employeeID in Employee.EmpID%TYPE)
 IS
-eventID;
 Begin
 eventID := EventID_seq.nextval;
 insert into LoadEvent values(eventID, SYSDATE, p_proNumber, p_origin, p_destination);
