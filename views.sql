@@ -24,3 +24,10 @@ create view Shipment2_VU(ProNumber, DueDate, TotalWeight, price, originTerm, Des
 as
 select proNumber, DueDate, TotalWeight,price, origin, destination, currentlocation, shipper, consignee, ispaying
 from shipment natural join ShipmentTravels natural join CustomerInteractions;
+
+
+/*View that shows after a loadEvent is created */
+create view LoadEvent_VU(ProNumber, Date , Employee, origin, CurrentLocation, EventID)
+as
+select proNumber, Date, EmpID, origin, Destination, EventID
+from LoadEvent natural join EventEmployees;
