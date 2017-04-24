@@ -88,7 +88,7 @@ p_employeeID in Employee.EmpID%TYPE)
 IS
 eventID number(5):= EventID_seq.nextval;
 Begin
-insert into LoadEvent values(eventID, SYSDATE, p_proNumber, p_origin, p_destination);
+insert into LoadEvent values(eventID, SYSDATE, p_proNumber, (select currentLocation from shipmentTravels where p_proNumber=pronumber), p_destination);
 insert into EventEmployees values(eventID,p_employeeID);
 End;
 /
