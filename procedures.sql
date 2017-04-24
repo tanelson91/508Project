@@ -62,3 +62,17 @@ Begin
 insert into Employee values(p_EmpID,p_FirstName,p_LastName,p_wage);
 insert into EmployeeWorkPlace values(p_EmpID,p_terminalID);
 End;
+
+/* New Load Event Procedure*/
+create or replace procedure newLoadEvent(
+p_proNumber in Shipment.proNumber%TYPE,
+p_origin in Entity.EntityID%TYPE,
+p_destination in Entity.EntityID%TYPE
+p_employeeID in Employee.EmpID%TYPE)
+IS
+eventID;
+Begin
+eventID := EventID_seq.nextval;
+insert into LoadEvent values(eventID, SYSDATE, p_proNumber, p_origin, p_destination);
+insert into EventEmployees values(eventID,p_employeeID);
+End;
