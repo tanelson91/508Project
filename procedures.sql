@@ -82,7 +82,6 @@ End;
 /* New Load Event Procedure*/
 create or replace procedure newLoadEvent(
 p_proNumber in Shipment.proNumber%TYPE,
-p_origin in Entity.EntityID%TYPE,
 p_destination in Entity.EntityID%TYPE,
 p_employeeID in Employee.EmpID%TYPE)
 IS
