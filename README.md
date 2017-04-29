@@ -11,7 +11,7 @@ Brandon Harris and Taylor Nelson CMSC 508 Database Project
 
 /*Upon successful insertion into the shipments table we need to take the user to a webpage that allows them to enter in the fields for inserting pallets, followed by a page that allows you to enter in fields for loose pieces*/<br>
 --when inserting a shipment we also need to add to the shipmentloose table<br>
---when inserting a shipment we also need to add to the shipmentPallets table<br>
+--when inserting a shipment we also need to add to the shipmentPallets table---------------DONE<br>
 
 /*Need a page for the trucker to enter in his origin, destination and trailer number*/<br>
 --whenever a linehaul leaves the terminal it must insert into the LineHaulTravel
