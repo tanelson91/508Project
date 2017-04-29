@@ -100,7 +100,7 @@ p_destination in Entity.EntityID%TYPE,
 p_origin in Entity.EntityID%TYPE
 )
 IS
- type varchar2(10):=(select Entity_type from Entity where EntityID=p_destination)
+ type varchar2(10):=(select Entity_type from Entity where EntityID=p_destination);
 Begin
 IF type ='Route' 
 THEN
