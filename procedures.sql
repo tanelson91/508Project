@@ -91,3 +91,20 @@ insert into LoadEvent values(eventID, SYSDATE, p_proNumber, (select currentLocat
 insert into EventEmployees values(eventID,p_employeeID);
 End;
 /
+
+/* New Trailer Route  works for both linehaul and city haul*/
+create or replace procedure TrailerRoute(
+p_TrailerNumber in Entity.EntityID%TYPE,
+p_destination in Entity.EntityID%TYPE,
+p_origin in Entity.EntityID%TYPE,
+)
+IS
+Begin
+IF ((select Entity_type from Entity where EntityID=p_destination)='Route') 
+THEN
+insert into CityHaulRoute(p_TrailerNumber,p_destination);
+ELSE
+insert into LineHaulTravel(p_trailerNumber, p_origin, SYSDATE, p_destination);
+END IF
+End;
+/
