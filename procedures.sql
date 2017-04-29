@@ -93,20 +93,20 @@ End;
 /
 
 /* New Trailer Route  works for both linehaul and city haul*/
-/* New Trailer Route  works for both linehaul and city haul*/
 create or replace procedure TrailerRoute(
 p_TrailerNumber in Entity.EntityID%TYPE,
 p_destination in Entity.EntityID%TYPE,
 p_origin in Entity.EntityID%TYPE
 )
 IS
- type varchar2(10):=(select Entity_type from Entity where EntityID=p_destination);
+tpe varchar2(10);
 Begin
-IF type ='Route' 
+select entity_type into tpe from Entity where EntityID=p_destination;
+IF tpe = 'Route' 
 THEN
-insert into CityHaulRoute(p_TrailerNumber,p_destination);
+insert into CityHaulRoute values(p_TrailerNumber,p_destination);
 ELSE
-insert into LineHaulTravel(p_trailerNumber, p_origin, SYSDATE, p_destination);
+insert into LineHaulTravel values(p_trailerNumber, p_origin, SYSDATE, p_destination);
 END IF;
 End;
 /
