@@ -21,8 +21,6 @@ Brandon Harris and Taylor Nelson CMSC 508 Database Project
 
 --when inserting into terminal insert it into entity first----------DONE
 
---floor contents table should be able to be replaced with a query along the lines of "show all the shipments whose current location is a given floor number
-
 --Shipment Travels procedure is already written, it updates the shipments current location.----------DONE
 
 /*after successful insertion into the loadEvent table take the user to a webpage that allows them to enter in the fields for inserting employees into EventEmployees, this works similarly as adding pallets to shipments*/<br>
