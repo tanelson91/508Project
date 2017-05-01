@@ -14,7 +14,7 @@ Brandon Harris and Taylor Nelson CMSC 508 Database Project
 --when inserting a shipment we also need to add to the shipmentPallets table---------------DONE<br>
 
 /*Need a page for the trucker to enter in his origin, destination and trailer number*/<br>
---whenever a linehaul leaves the terminal it must insert into the LineHaulTravel
+--whenever a linehaul leaves the terminal it must insert into the LineHaulTravel----------DONE
 
 /*An employee should be able to update shipment conditions at any time, maybe a page for this?*/<br>
 --need to be able to update shipmentConditions
