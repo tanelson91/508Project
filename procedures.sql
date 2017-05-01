@@ -27,7 +27,8 @@ IS
 Begin
 insert into shipment values(p_ProNumber,p_Duedate,p_TotalWeight, p_Price);
 insert into shipmentTravels values(p_ProNumber,p_origin,p_destination,p_origin);
-insert into CustomerInteractions values(p_ProNumber,p_shipper,p_consignee,p_isPaying);
+insert into CustomerInteractions values(p_ProNumber, p_shipper, p_consignee, p_isPaying);
+insert into ShipmentCondition values(p_ProNumber, 0,0,0);
 End;
 /
 -----------------------------done
