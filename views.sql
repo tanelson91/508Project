@@ -27,7 +27,10 @@ from shipment natural join ShipmentTravels natural join CustomerInteractions;
 
 
 /*View that shows after a loadEvent is created */
-create view LoadEvent_VU(ProNumber, "Date" , Employee, origin, CurrentLocation, EventID)
+create view LoadEvent_VU(ProNumber, "Date" , Employee, origin, CurrentLocation, EventID, damaged, under, over)
 as
-select proNumber, "Date", EmpID, origin, Destination, EventID
-from LoadEvent natural join EventEmployees;
+select proNumber, TO_CHAR("Date",'MM-DD-YY hh:mm:ss AM'), first_name || ' ' || last_name as Employee, origin, Destination, EventID, damaged,
+under, over
+from LoadEvent natural join EventEmployees natural join employee
+WHERE proNumber = proNumber
+ORDER BY proNumber, "Date" DESC;
