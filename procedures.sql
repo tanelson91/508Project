@@ -2,17 +2,6 @@
 
 /*This procedure should be used every time a new shipment is created so that
 you also insert the shipment into the shipment travels so that your able to track the shipment*/
-execute newShipment(12345677, '05/31/17', 1000, 4000, 'RIC', 'ATL', 7421851, 7422383, 7422383);
-
-select * from shipment;
-select * from shipmenttravels;
-describe loadevent;
-describe eventemployees;
-delete from shipment where proNumber = 12345677;
-alter table shipment modify dueDate varchar(2);
-delete from customerinteractions where pronumber = 12345677;
-delete from shipmenttravels where pronumber = 12345677;
-
 create or replace procedure newShipment(
 p_ProNumber in Shipment.ProNumber%TYPE,
 p_Duedate in varchar2,
@@ -22,13 +11,19 @@ p_origin in ShipmentTravels.origin%TYPE,
 p_destination in ShipmentTravels.destination%TYPE,
 p_shipper in Customer.ID%TYPE,
 p_consignee in Customer.ID%TYPE,
-p_isPaying in Customer.ID%TYPE)
+p_isPaying in Customer.ID%TYPE,
+p_proNum in LoadEvent.proNumber%TYPE,
+p_damaged IN  LoadEvent.damaged%TYPE,
+p_short IN LoadEvent.over%TYPE,
+p_over IN LoadEvent.under%TYPE
+)
 IS
 Begin
-insert into shipment values(p_ProNumber,p_Duedate,p_TotalWeight, p_Price);
+insert into shipment values(p_ProNumber,TO_DATE(p_Duedate,'MM/DD/YY'),p_TotalWeight, p_Price);
+INSERT INTO loadEvent VALUES(EventID_seq.nextval, SYSDATE,p_proNumber, p_origin, p_destination, p_damaged, p_short, p_over);
+INSERT INTO shipmentCondition VALUES (p_proNum,0,0,0);
 insert into shipmentTravels values(p_ProNumber,p_origin,p_destination,p_origin);
-insert into CustomerInteractions values(p_ProNumber, p_shipper, p_consignee, p_isPaying);
-insert into ShipmentCondition values(p_ProNumber, 0,0,0);
+insert into CustomerInteractions values(p_ProNumber,p_shipper,p_consignee,p_isPaying);
 End;
 /
 -----------------------------done
