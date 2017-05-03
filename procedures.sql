@@ -79,11 +79,15 @@ End;
 create or replace procedure newLoadEvent(
 p_proNumber in Shipment.proNumber%TYPE,
 p_destination in Entity.EntityID%TYPE,
-p_employeeID in Employee.EmpID%TYPE)
+p_employeeID in Employee.EmpID%TYPE,
+p_damaged IN LoadEvent.damaged%TYPE,
+p_short IN LoadEvent.under%TYPE,
+p_over IN LoadEvent.over%TYPE
+)
 IS
 eventID number(5):= EventID_seq.nextval;
 Begin
-insert into LoadEvent values(eventID, SYSDATE, p_proNumber, (select currentLocation from shipmentTravels where p_proNumber=pronumber), p_destination);
+insert into LoadEvent values(eventID, SYSDATE, p_proNumber, (select currentLocation from shipmentTravels where p_proNumber=pronumber), p_destination, p_damaged, p_over, p_short );
 insert into EventEmployees values(eventID,p_employeeID);
 End;
 /
