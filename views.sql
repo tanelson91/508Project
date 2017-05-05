@@ -8,10 +8,10 @@ from terminal join Address on terminal.AddressID=Address.AddressID;
 
 
 /* view that shows the customer and their full address*/
-create view CustomerAddresses(customerName,StreetAddress,City,ZipCode,state)
+create view CustomerAddresses(custID,customerName,StreetAddress,City,state,ZipCode)
 as
-select name,Address.StreetAddress,Address.City,Address.State,Address.ZipCode
-from Customer join Address on customerID.AddressID=Address.AddressID;
+select id,name,Address.StreetAddress,Address.City,Address.ZipCode, Address.State
+from Customer join Address on customer.AddressID=Address.AddressID;
 
 
 
