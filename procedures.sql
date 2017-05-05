@@ -38,9 +38,10 @@ p_State in Address.State%TYPE)
 IS
 adrID number(5) := AddressID_seq.nextval;
 Begin
-insert into address values(adrID,p_StreetAddress,p_ZipCode, p_City,p_State);
+insert into address values(adrID,p_StreetAddress, p_City, p_ZipCode, p_State);
 insert into Customer values(p_custID,p_name,adrID);
 End;
+
 /
 
 ----------------------------------------------------Done
