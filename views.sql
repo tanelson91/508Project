@@ -5,11 +5,15 @@ as
 select terminalID,Address.StreetAddress,Address.City,Address.ZipCode,Address.State
 from terminal join Address on terminal.AddressID=Address.AddressID;
 
+
+
 /* view that shows the customer and their full address*/
-create view CustomerAddresses(customerID,StreetAddress,City,ZipCode,state)
+create view CustomerAddresses(customerName,StreetAddress,City,ZipCode,state)
 as
-select ID,Address.StreetAddress,Address.City,Address.State,Address.ZipCode
+select name,Address.StreetAddress,Address.City,Address.State,Address.ZipCode
 from Customer join Address on customerID.AddressID=Address.AddressID;
+
+
 
 /*View for showing shipments and how many pallets and loose it has */
 create view Shipment_VU(ProNumber, DueDate, TotalWeight,price, Num_Pallets, Num_Loose)
